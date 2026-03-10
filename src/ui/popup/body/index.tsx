@@ -2,13 +2,11 @@ import {m} from 'malevic';
 import {getContext} from 'malevic/dom';
 
 import type {ViewProps} from '../../../definitions';
-import {DONATE_URL, HOMEPAGE_URL} from '../../../utils/links';
-import {getLocalMessage} from '../../../utils/locales';
+import {HOMEPAGE_URL} from '../../../utils/links';
 import {isMobile} from '../../../utils/platform';
 import {Overlay} from '../../controls';
 import {openExtensionPage} from '../../utils';
 import MainPage from '../main-page';
-import NewsSection from '../news-section';
 import {Page, PageViewer} from '../page-viewer';
 import ThemePage from '../theme/page';
 
@@ -24,7 +22,7 @@ function Logo() {
             target="_blank"
             rel="noopener noreferrer"
         >
-            Dark Reader
+            DarkReaderLocal
         </a>
     );
 }
@@ -99,22 +97,6 @@ function Pages(props: ViewProps) {
     );
 }
 
-function DonateGroup() {
-    return (
-        <div class="m-donate-group">
-            <a class="m-donate-button" href={DONATE_URL} target="_blank" rel="noopener noreferrer">
-                <span class="m-donate-button__icon"></span>
-                <span class="m-donate-button__text">
-                    {getLocalMessage('donate')}
-                </span>
-            </a>
-            <label class="m-donate-description">
-                This project is sponsored by you
-            </label>
-        </div>
-    );
-}
-
 export default function Body(props: ViewProps) {
     const context = getContext();
     context.onCreate(() => {
@@ -134,10 +116,6 @@ export default function Body(props: ViewProps) {
             <section class="m-section pages-section">
                 <Pages {...props} />
             </section>
-            <section class="m-section">
-                <DonateGroup />
-            </section>
-            <NewsSection {...props} />
             <Overlay />
         </body>
     );

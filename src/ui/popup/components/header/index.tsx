@@ -10,7 +10,6 @@ import {Toggle} from '../../../controls';
 import {SettingsIcon, SunMoonIcon, SystemIcon, WatchIcon} from '../../../icons';
 import SiteToggle from '../site-toggle';
 
-import MoreNewHighlight from './more-new-highlight';
 import MoreSiteSettings from './more-site-settings';
 import MoreToggleSettings from './more-toggle-settings';
 
@@ -89,7 +88,7 @@ function Header(props: HeaderProps) {
     return (
         <header class="header">
             <a class="header__logo" href={HOMEPAGE_URL} target="_blank" rel="noopener noreferrer">
-                Dark Reader
+                DarkReaderLocal
             </a>
             <div class="header__control header__site-toggle">
                 <SiteToggle
@@ -138,7 +137,6 @@ function Header(props: HeaderProps) {
 
 export {
     Header,
-    MoreNewHighlight,
     MoreSiteSettings,
-    MoreToggleSettings, // TODO: Implement portals to place elements into <body>.
+    MoreToggleSettings,
 };

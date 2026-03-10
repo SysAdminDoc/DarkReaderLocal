@@ -1,27 +1,23 @@
 import {m} from 'malevic';
-import {getContext} from 'malevic/dom';
 import {withForms} from 'malevic/forms';
 import {withState, useState} from 'malevic/state';
 
-import type {ExtensionData, ExtensionActions, News as NewsObject} from '../../../definitions';
-import {DONATE_URL, HOMEPAGE_URL, MOBILE_URL, getHelpURL} from '../../../utils/links';
+import type {ExtensionData, ExtensionActions, Theme} from '../../../definitions';
+import {AutomationMode} from '../../../utils/automation';
 import {getLocalMessage} from '../../../utils/locales';
-import {isMobile} from '../../../utils/platform';
-import {getDuration} from '../../../utils/time';
-import {TabPanel} from '../../controls';
-import {compose} from '../../utils';
+import {isMatchMediaChangeEventListenerBuggy, isMobile} from '../../../utils/platform';
+import {getURLHostOrProtocol, isURLInList} from '../../../utils/url';
+import {CheckBox, MultiSwitch, Shortcut, TextBox, TextList, TimeRangePicker, Toggle, UpDown} from '../../controls';
+import {compose, openExtensionPage} from '../../utils';
 import NewBody from '../body';
 
-import FilterSettings from './filter-settings';
-import {Header, MoreSiteSettings, MoreToggleSettings} from './header';
+import {toggleExtension} from './header';
 import Loader from './loader';
-import MoreSettings from './more-settings';
-import {NewsGroup, NewsButton} from './news';
-import {MobileLinks, MobileLinksButton} from './news/mobile-links';
-import SiteListSettings from './site-list-settings';
+import {getSiteToggleData} from './site-toggle';
 
+import {PlusBody} from '@plus/popup/plus-body';
 
-import {PlusBody, activate} from '@plus/popup/plus-body';
+import {ThemeEngine} from '../../../generators/theme-engines';
 
 declare const __THUNDERBIRD__: boolean;
 declare const __PLUS__: boolean;
@@ -32,27 +28,23 @@ interface BodyProps {
 }
 
 interface BodyState {
-    activeTab: string;
-    newsOpen: boolean;
-    mobileLinksOpen: boolean;
-    didNewsSlideIn: boolean;
-    didMobileLinksSlideIn: boolean;
-    moreSiteSettingsOpen: boolean;
-    moreToggleSettingsOpen: boolean;
-    newToggleMenusHighlightHidden: boolean;
+    siteListOpen: boolean;
+    automationOpen: boolean;
+    fontOpen: boolean;
 }
 
+const engineNames: Array<[ThemeEngine, string]> = [
+    [ThemeEngine.dynamicTheme, getLocalMessage('engine_dynamic')],
+    [ThemeEngine.cssFilter, getLocalMessage('engine_filter')],
+    [ThemeEngine.svgFilter, getLocalMessage('engine_filter_plus')],
+    [ThemeEngine.staticTheme, getLocalMessage('engine_static')],
+];
+
 function Body(props: BodyProps & {fonts: string[]} & {installation: {date: number; version: string}}) {
-    const context = getContext();
     const {state, setState} = useState<BodyState>({
-        activeTab: 'Filter',
-        newsOpen: false,
-        mobileLinksOpen: false,
-        didNewsSlideIn: false,
-        didMobileLinksSlideIn: false,
-        moreSiteSettingsOpen: false,
-        moreToggleSettingsOpen: false,
-        newToggleMenusHighlightHidden: false,
+        siteListOpen: false,
+        automationOpen: false,
+        fontOpen: false,
     });
 
     if (!props.data.isReady) {
@@ -78,213 +70,396 @@ function Body(props: BodyProps & {fonts: string[]} & {installation: {date: numbe
         return <NewBody {...props} fonts={props.fonts} />;
     }
 
-    const unreadNews = props.data.news.filter(({read}) => !read);
-    const latestNews = props.data.news.length > 0 ? props.data.news[0] : null;
-    const isFirstNewsUnread = latestNews && !latestNews.read;
-    let newsWereLongTimeAgo = true;
-    if (unreadNews.length > 0) {
-        const latest = new Date(unreadNews[0].date);
-        const today = new Date();
-        newsWereLongTimeAgo = latest.getTime() < today.getTime() - getDuration({days: 30});
-    }
-    const displayedNewsCount = newsWereLongTimeAgo ? 0 : unreadNews.length;
+    const {data, actions} = props;
+    const tab = data.activeTab;
+    const locationSettings = data.settings.location;
 
-    context.onRender(() => {
-        if (props.data.uiHighlights.includes('mobile-links') && !state.mobileLinksOpen && !state.didMobileLinksSlideIn) {
-            setTimeout(toggleMobileLinks, 750);
-        } else if (props.data.settings.fetchNews && isFirstNewsUnread && !state.newsOpen && !state.didNewsSlideIn && !newsWereLongTimeAgo) {
-            setTimeout(toggleNews, 750);
-        }
-    });
+    // Per-site vs global theme
+    const custom = data.settings.customThemes.find(({url}) => isURLInList(tab.url, url));
+    const theme = custom ? custom.theme : data.settings.theme;
+    const isPerSite = Boolean(custom);
 
-    function toggleNews() {
-        if (state.newsOpen && unreadNews.length > 0) {
-            props.actions.markNewsAsRead(unreadNews.map(({id}) => id));
-        }
-        setState({newsOpen: !state.newsOpen, didNewsSlideIn: state.didNewsSlideIn || !state.newsOpen});
-    }
-
-    function toggleMobileLinks() {
-        setState({mobileLinksOpen: !state.mobileLinksOpen, didMobileLinksSlideIn: state.didMobileLinksSlideIn || !state.mobileLinksOpen});
-        if (state.mobileLinksOpen && props.data.uiHighlights.includes('mobile-links')) {
-            disableMobileLinksSlideIn();
+    function setTheme(config: Partial<Theme>) {
+        if (custom) {
+            custom.theme = {...custom.theme, ...config};
+            actions.changeSettings({customThemes: data.settings.customThemes});
+        } else {
+            actions.setTheme(config);
         }
     }
 
-    function disableMobileLinksSlideIn() {
-        if (props.data.uiHighlights.includes('mobile-links')) {
-            props.actions.hideHighlights(['mobile-links']);
+    function togglePerSite() {
+        if (isPerSite) {
+            const filtered = data.settings.customThemes.filter(({url}) => !isURLInList(tab.url, url));
+            actions.changeSettings({customThemes: filtered});
+        } else {
+            const host = getURLHostOrProtocol(tab.url);
+            const extended = data.settings.customThemes.concat({
+                url: [host],
+                theme: {...data.settings.theme},
+            });
+            actions.changeSettings({customThemes: extended});
         }
     }
 
-    function onNewsOpen(...news: NewsObject[]) {
-        const unread = news.filter(({read}) => !read);
-        if (unread.length > 0) {
-            props.actions.markNewsAsRead(unread.map(({id}) => id));
-        }
+    // Site toggle
+    const {urlText, onSiteToggleClick, toggleHasEffect, isSiteEnabled} = getSiteToggleData(props);
+
+    // Automation
+    function changeAutomationMode(mode: AutomationMode) {
+        actions.changeSettings({automation: {...data.settings.automation, mode, enabled: Boolean(mode)}});
     }
 
-    function toggleMoreSiteSettings() {
-        setState({moreSiteSettingsOpen: !state.moreSiteSettingsOpen, moreToggleSettingsOpen: false, newToggleMenusHighlightHidden: true});
-        if (props.data.uiHighlights.includes('new-toggle-menus')) {
-            props.actions.hideHighlights(['new-toggle-menus']);
+    function getLocationString(location: number | null) {
+        if (location == null) {
+            return '';
         }
+        return `${location}\u00b0`;
     }
 
-    function toggleMoreToggleSettings() {
-        setState({moreToggleSettingsOpen: !state.moreToggleSettingsOpen, moreSiteSettingsOpen: false, newToggleMenusHighlightHidden: true});
-        if (props.data.uiHighlights.includes('new-toggle-menus')) {
-            props.actions.hideHighlights(['new-toggle-menus']);
+    function locationChanged(inputElement: HTMLInputElement, newValue: string, type: 'latitude' | 'longitude') {
+        const ranges = {latitude: {min: -90, max: 90}, longitude: {min: -180, max: 180}};
+        if (newValue.trim() === '') {
+            inputElement.value = '';
+            actions.changeSettings({location: {...locationSettings, [type]: null}});
+            return;
         }
+        const {min, max} = ranges[type];
+        let num = Number(newValue.replace(',', '.').replace('\u00b0', ''));
+        if (isNaN(num)) {
+            num = 0;
+        } else if (num > max) {
+            num = max;
+        } else if (num < min) {
+            num = min;
+        }
+        inputElement.value = getLocationString(num);
+        actions.changeSettings({location: {...locationSettings, [type]: num}});
     }
 
-    const birthdayMessage = getLocalMessage('we_celebrate_10_years');
-    let birthdayMessageSpec = <span>{birthdayMessage}</span>;
-    try {
-        const index10 = birthdayMessage.indexOf('10');
-        const indexDot = birthdayMessage.indexOf('.', index10);
-        if (index10 >= 0 && indexDot > index10) {
-            birthdayMessageSpec = (
-                <span>
-                    {birthdayMessage.substring(0, index10)}
-                    <a href={`${HOMEPAGE_URL}/timeline/`} target="_blank" rel="noopener noreferrer">
-                        {birthdayMessage.substring(index10, indexDot)}
-                    </a>
-                    {birthdayMessage.substring(indexDot)}
-                </span>
-            );
-        }
-    } catch (err) {
-        console.error(err);
+    const isSystemAutomation = data.settings.automation.mode === AutomationMode.SYSTEM;
+    const isTimeAutomation = data.settings.automation.mode === AutomationMode.TIME;
+    const isLocationAutomation = data.settings.automation.mode === AutomationMode.LOCATION;
+
+    const siteListValues = data.settings.enabledByDefault
+        ? data.settings.disabledFor
+        : data.settings.enabledFor;
+
+    function isSiteUrlValid(value: string) {
+        return /^([^\.\s]+?\.?)+$/.test(value);
     }
 
-    const filterTab = <FilterSettings data={props.data} actions={props.actions}>
-        {__PLUS__ ? (
-            props.data.uiHighlights.includes('anniversary') ? (
-                <div class="ui-upgrade">
-                    <i class="ui-upgrade__icon">
-                    </i>
-                    <span class="ui-upgrade__message">
-                        Support the development and get access to the latest features
-                    </span>
-                    <a class="ui-upgrade__button" href={`${HOMEPAGE_URL}/plus/`} target="_blank" rel="noopener noreferrer">
-                        <span class="ui-upgrade__button__text">
-                            Upgrade
-                        </span>
-                    </a>
-                </div>
-            ) : (
-                <div class="ui-upgrade">
-                    <i class="ui-upgrade__icon">
-                    </i>
-                    <span class="ui-upgrade__message">
-                        Activate the latest features
-                    </span>
-                    <a class="ui-upgrade__button" target="_blank" rel="noopener noreferrer" onclick={() => {
-                        chrome.storage.local.get<Record<string, any>>({activationEmail: '', activationKey: ''}, async ({activationEmail, activationKey}) => {
-                            const result = await activate(activationEmail, activationKey);
-                            if (result) {
-                                context.refresh();
-                            } else {
-                                props.actions.changeSettings({previewNewestDesign: true});
-                            }
-                        });
-                    }}>
-                        <span class="ui-upgrade__button__text">
-                            Enable new design
-                        </span>
-                    </a>
-                </div>
-            )
-        ) : props.data.uiHighlights.includes('anniversary') ? (
-            <div class="birthday-container">
-                <i class="birthday-icon">🎉</i>
-                <span class="birthday-message">
-                    {birthdayMessageSpec}
-                </span>
-                <a class="donate-link" href={DONATE_URL} target="_blank" rel="noopener noreferrer">
-                    <span class="donate-link__text">{getLocalMessage('pay_for_using')}</span>
-                </a>
-            </div>
-        ) : null}
-    </FilterSettings>;
+    function onSiteListChange(values: string[]) {
+        const siteList = values.filter(isSiteUrlValid);
+        const changes = data.settings.enabledByDefault
+            ? {disabledFor: siteList}
+            : {enabledFor: siteList};
+        actions.changeSettings(changes);
+    }
 
-    const moreTab = <MoreSettings data={props.data} actions={props.actions} fonts={props.fonts} />;
+    const currentEngineName = engineNames.find(([code]) => code === theme.engine)![1];
 
     return (
-        <body
-            class={{
-                'ext-disabled': !props.data.isEnabled,
-                'ext-tall': __PLUS__ || props.data.uiHighlights.includes('anniversary'),
-            }}
-        >
+        <body class={{'ext-disabled': !data.isEnabled}}>
             <Loader complete />
 
-            <Header
-                data={props.data}
-                actions={props.actions}
-                onMoreSiteSettingsClick={toggleMoreSiteSettings}
-                onMoreToggleSettingsClick={toggleMoreToggleSettings}
-            />
-
-            <TabPanel
-                activeTab={state.activeTab}
-                onSwitchTab={(tab) => setState({activeTab: tab})}
-                tabs={__THUNDERBIRD__ ? {
-                    'Filter': filterTab,
-                    'More': moreTab,
-                } : {
-                    'Filter': filterTab,
-                    'Site list': (
-                        <SiteListSettings data={props.data} actions={props.actions} isFocused={state.activeTab === 'Site list'} />
-                    ),
-                    'More': moreTab,
-                }}
-                tabLabels={{
-                    'Filter': getLocalMessage('filter'),
-                    'Site list': getLocalMessage('site_list'),
-                    'More': getLocalMessage('more'),
-                }}
-            />
-
-            <div class="mobile-link-container">
-                <a class="mobile-link" href={MOBILE_URL} target="_blank" rel="noopener noreferrer">
-                    <span class="mobile-link__icon"></span>
-                    <span class="mobile-link__text">
-                        {getLocalMessage('mobile_link')}
+            {/* ── Site status row ── */}
+            <div class="rd-site">
+                <span
+                    class={{'rd-site__left': true, 'rd-site__left--clickable': toggleHasEffect && !__THUNDERBIRD__}}
+                    onclick={toggleHasEffect && !__THUNDERBIRD__ ? onSiteToggleClick : undefined}
+                >
+                    <span class={{'rd-site__dot': true, 'rd-site__dot--on': isSiteEnabled}} />
+                    <span class="rd-site__url">{urlText}</span>
+                    <span class={{'rd-site__status': true, 'rd-site__status--active': isSiteEnabled}}>
+                        {isSiteEnabled ? 'Active' : 'Paused'}
                     </span>
-                </a>
+                </span>
+                <span
+                    class={{'rd-power-btn': true, 'rd-power-btn--on': data.isEnabled}}
+                    onclick={() => toggleExtension(props, !data.isEnabled)}
+                >
+                    {data.isEnabled ? getLocalMessage('on') : getLocalMessage('off')}
+                </span>
             </div>
-            <footer>
-                <div class="footer-buttons">
-                    <a class="footer-help-link" href={getHelpURL()} target="_blank" rel="noopener noreferrer">{getLocalMessage('help')}</a>
-                    <NewsButton active={state.newsOpen} count={displayedNewsCount} onClick={toggleNews} />
-                    <MobileLinksButton active={state.mobileLinksOpen} onClick={toggleMobileLinks} />
+
+            {/* ── Scrollable content ── */}
+            <div class="rd-scroll">
+
+                {/* ── Display section ── */}
+                <div class="rd-section">
+                    <div class="rd-section__head">
+                        <span class="rd-section__title">Display</span>
+                        <span
+                            class={{'rd-scope-badge': true, 'rd-scope-badge--site': isPerSite}}
+                            onclick={togglePerSite}
+                            title={isPerSite ? 'Per-site settings active — click to use global' : 'Using global settings — click to customize for this site'}
+                        >
+                            {isPerSite ? 'Per-site' : 'Global'}
+                        </span>
+                    </div>
+                    <div class="rd-section__body">
+                        <div class="rd-mode-row">
+                            <span
+                                class={{'rd-mode-btn': true, 'rd-mode-btn--active': theme.mode === 1}}
+                                onclick={() => setTheme({mode: 1})}
+                            >
+                                Dark
+                            </span>
+                            <span
+                                class={{'rd-mode-btn': true, 'rd-mode-btn--active': theme.mode === 0}}
+                                onclick={() => setTheme({mode: 0})}
+                            >
+                                Light
+                            </span>
+                        </div>
+                        <UpDown
+                            value={theme.brightness}
+                            min={50}
+                            max={150}
+                            step={5}
+                            default={100}
+                            name={getLocalMessage('brightness')}
+                            onChange={(v) => setTheme({brightness: v})}
+                        />
+                        <UpDown
+                            value={theme.contrast}
+                            min={50}
+                            max={150}
+                            step={5}
+                            default={100}
+                            name={getLocalMessage('contrast')}
+                            onChange={(v) => setTheme({contrast: v})}
+                        />
+                        <UpDown
+                            value={theme.sepia}
+                            min={0}
+                            max={100}
+                            step={5}
+                            default={0}
+                            name={getLocalMessage('sepia')}
+                            onChange={(v) => setTheme({sepia: v})}
+                        />
+                        <UpDown
+                            value={theme.grayscale}
+                            min={0}
+                            max={100}
+                            step={5}
+                            default={0}
+                            name={getLocalMessage('grayscale')}
+                            onChange={(v) => setTheme({grayscale: v})}
+                        />
+                    </div>
                 </div>
-            </footer>
-            <NewsGroup
-                news={props.data.news}
-                expanded={state.newsOpen}
-                onNewsOpen={onNewsOpen}
-                onClose={toggleNews}
-            />
-            <MobileLinks
-                expanded={state.mobileLinksOpen}
-                onLinkClick={disableMobileLinksSlideIn}
-                onClose={toggleMobileLinks}
-            />
-            <MoreSiteSettings
-                data={props.data}
-                actions={props.actions}
-                isExpanded={state.moreSiteSettingsOpen}
-                onClose={toggleMoreSiteSettings}
-            />
-            <MoreToggleSettings
-                data={props.data}
-                actions={props.actions}
-                isExpanded={state.moreToggleSettingsOpen}
-                onClose={toggleMoreToggleSettings}
-            />
+
+                {/* ── Engine section ── */}
+                <div class="rd-section">
+                    <div class="rd-section__head">
+                        <span class="rd-section__title">Engine</span>
+                    </div>
+                    <div class="rd-section__body">
+                        <MultiSwitch
+                            value={currentEngineName}
+                            options={engineNames.map(([, name]) => name)}
+                            onChange={(value) => {
+                                const found = engineNames.find(([, name]) => name === value);
+                                if (found) setTheme({engine: found[0]});
+                            }}
+                        />
+                        {theme.engine === ThemeEngine.staticTheme ? (
+                            <span
+                                class="rd-css-edit-btn"
+                                onclick={() => openExtensionPage('stylesheet-editor')}
+                            >
+                                Edit CSS
+                            </span>
+                        ) : null}
+                    </div>
+                </div>
+
+                {/* ── Font & Text section (collapsible) ── */}
+                <div class={{'rd-section': true, 'rd-section--open': state.fontOpen}}>
+                    <div
+                        class="rd-section__head rd-section__head--toggle"
+                        onclick={() => setState({fontOpen: !state.fontOpen})}
+                    >
+                        <span class="rd-section__title">Font &amp; Text</span>
+                        <span class="rd-section__chevron">{state.fontOpen ? '\u25b2' : '\u25bc'}</span>
+                    </div>
+                    {state.fontOpen ? (
+                        <div class="rd-section__body">
+                            <div class="rd-font-row">
+                                <CheckBox
+                                    checked={theme.useFont}
+                                    onchange={(e: {target: HTMLInputElement}) => setTheme({useFont: e.target.checked})}
+                                />
+                                <select
+                                    class="rd-font-select"
+                                    title={getLocalMessage('select_font')}
+                                    onchange={(e: {target: HTMLSelectElement}) => setTheme({fontFamily: e.target.value, useFont: true})}
+                                >
+                                    {props.fonts.map((font) => (
+                                        <option
+                                            value={font}
+                                            selected={theme.fontFamily === font}
+                                        >
+                                            {font}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <label class="rd-label">Use custom font</label>
+                            <UpDown
+                                value={theme.textStroke}
+                                min={0}
+                                max={1}
+                                step={0.1}
+                                default={0}
+                                name={getLocalMessage('text_stroke')}
+                                onChange={(v) => setTheme({textStroke: v})}
+                            />
+                        </div>
+                    ) : null}
+                </div>
+
+                {/* ── Site List section (collapsible) ── */}
+                {!__THUNDERBIRD__ ? (
+                    <div class={{'rd-section': true, 'rd-section--open': state.siteListOpen}}>
+                        <div
+                            class="rd-section__head rd-section__head--toggle"
+                            onclick={() => setState({siteListOpen: !state.siteListOpen})}
+                        >
+                            <span class="rd-section__title">{getLocalMessage('site_list')}</span>
+                            <span class="rd-section__chevron">{state.siteListOpen ? '\u25b2' : '\u25bc'}</span>
+                        </div>
+                        {state.siteListOpen ? (
+                            <div class="rd-section__body">
+                                <Toggle
+                                    checked={!data.settings.enabledByDefault}
+                                    labelOn={getLocalMessage('invert_listed_only')}
+                                    labelOff={getLocalMessage('not_invert_listed')}
+                                    onChange={(value) => actions.changeSettings({enabledByDefault: !value})}
+                                />
+                                <TextList
+                                    placeholder="google.com/maps"
+                                    values={siteListValues}
+                                    isFocused={state.siteListOpen}
+                                    onChange={onSiteListChange}
+                                />
+                                <Shortcut
+                                    commandName="addSite"
+                                    shortcuts={data.shortcuts}
+                                    textTemplate={(hotkey) => (hotkey
+                                        ? `${getLocalMessage('add_site_to_list')}: ${hotkey}`
+                                        : getLocalMessage('setup_add_site_hotkey')
+                                    )}
+                                    onSetShortcut={(shortcut) => actions.setShortcut('addSite', shortcut)}
+                                />
+                            </div>
+                        ) : null}
+                    </div>
+                ) : null}
+
+                {/* ── Automation section (collapsible) ── */}
+                <div class={{'rd-section': true, 'rd-section--open': state.automationOpen}}>
+                    <div
+                        class="rd-section__head rd-section__head--toggle"
+                        onclick={() => setState({automationOpen: !state.automationOpen})}
+                    >
+                        <span class="rd-section__title">{getLocalMessage('automation')}</span>
+                        {data.settings.automation.enabled ? (
+                            <span class="rd-badge">On</span>
+                        ) : null}
+                        <span class="rd-section__chevron">{state.automationOpen ? '\u25b2' : '\u25bc'}</span>
+                    </div>
+                    {state.automationOpen ? (
+                        <div class="rd-section__body">
+                            {/* Time-based */}
+                            <div class="rd-auto-row">
+                                <CheckBox
+                                    checked={isTimeAutomation}
+                                    onchange={(e: {target: HTMLInputElement}) => changeAutomationMode(e.target.checked ? AutomationMode.TIME : AutomationMode.NONE)}
+                                />
+                                <span class="rd-auto-label">Time schedule</span>
+                            </div>
+                            {isTimeAutomation ? (
+                                <div class="rd-auto-detail">
+                                    <TimeRangePicker
+                                        startTime={data.settings.time.activation}
+                                        endTime={data.settings.time.deactivation}
+                                        onChange={([start, end]) => actions.changeSettings({time: {activation: start, deactivation: end}})}
+                                    />
+                                    <span class="rd-auto-desc">{getLocalMessage('set_active_hours')}</span>
+                                </div>
+                            ) : null}
+
+                            {/* Location-based */}
+                            <div class="rd-auto-row">
+                                <CheckBox
+                                    checked={isLocationAutomation}
+                                    onchange={(e: {target: HTMLInputElement}) => changeAutomationMode(e.target.checked ? AutomationMode.LOCATION : AutomationMode.NONE)}
+                                />
+                                <span class="rd-auto-label">Sunrise/sunset</span>
+                            </div>
+                            {isLocationAutomation ? (
+                                <div class="rd-auto-detail">
+                                    <div class="rd-location-row">
+                                        <TextBox
+                                            class="rd-location-input"
+                                            placeholder={getLocalMessage('latitude')}
+                                            onchange={(e: {target: HTMLInputElement}) => locationChanged(e.target, e.target.value, 'latitude')}
+                                            oncreate={(node: HTMLInputElement) => { node.value = getLocationString(locationSettings.latitude); }}
+                                            onkeypress={(e: KeyboardEvent) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+                                        />
+                                        <TextBox
+                                            class="rd-location-input"
+                                            placeholder={getLocalMessage('longitude')}
+                                            onchange={(e: {target: HTMLInputElement}) => locationChanged(e.target, e.target.value, 'longitude')}
+                                            oncreate={(node: HTMLInputElement) => { node.value = getLocationString(locationSettings.longitude); }}
+                                            onkeypress={(e: KeyboardEvent) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+                                        />
+                                    </div>
+                                    <span class="rd-auto-desc">{getLocalMessage('set_location')}</span>
+                                </div>
+                            ) : null}
+
+                            {/* System dark mode */}
+                            <div class="rd-auto-row">
+                                <CheckBox
+                                    checked={isSystemAutomation}
+                                    onchange={(e: {target: HTMLInputElement}) => changeAutomationMode(e.target.checked ? AutomationMode.SYSTEM : AutomationMode.NONE)}
+                                />
+                                <span class="rd-auto-label">{getLocalMessage('system_dark_mode')}</span>
+                            </div>
+                            {isMatchMediaChangeEventListenerBuggy ? (
+                                <p class="rd-auto-warning">{getLocalMessage('system_dark_mode_chromium_warning')}</p>
+                            ) : null}
+
+                            {/* Extension toggle shortcut */}
+                            <div class="rd-shortcut-row">
+                                <Shortcut
+                                    commandName="toggle"
+                                    shortcuts={data.shortcuts}
+                                    textTemplate={(hotkey) => (hotkey
+                                        ? hotkey
+                                        : getLocalMessage('click_to_set_shortcut')
+                                    )}
+                                    onSetShortcut={(shortcut) => actions.setShortcut('toggle', shortcut)}
+                                />
+                                <span class="rd-shortcut-label">{getLocalMessage('extension_toggle_shortcut')}</span>
+                            </div>
+                        </div>
+                    ) : null}
+                </div>
+
+                {/* ── All Settings button ── */}
+                <div class="rd-footer">
+                    <span class="rd-settings-btn" onclick={() => openExtensionPage('options')}>
+                        All Settings
+                    </span>
+                </div>
+
+            </div>
         </body>
     );
 }

@@ -1,7 +1,7 @@
 {
-  "name": "darkreader",
+  "name": "darkreaderlocal",
   "version": "4.9.123",
-  "description": "Dark mode for every website",
+  "description": "Offline-only, debloated Dark Reader fork with modernized UI",
   "scripts": {
     "api": "node --max-old-space-size=3072 tasks/cli.js build --api",
     "build": "node --max-old-space-size=3072 tasks/cli.js build --release",
