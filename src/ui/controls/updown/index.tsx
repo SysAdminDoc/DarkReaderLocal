@@ -1,6 +1,5 @@
 import {m} from 'malevic';
 
-import {getLocalMessage} from '../../../utils/locales';
 import Button from '../button';
 
 import Track from './track';
@@ -55,7 +54,7 @@ export default function UpDown(props: UpDownProps) {
 
     const trackValue = (props.value - props.min) / (props.max - props.min);
     const valueText = (props.value === props.default
-        ? getLocalMessage('off').toLocaleLowerCase()
+        ? null
         : props.value > props.default
             ? `+${normalize(props.value - props.default)}`
             : `-${normalize(props.default - props.value)}`
@@ -70,15 +69,13 @@ export default function UpDown(props: UpDownProps) {
                 <Track
                     value={trackValue}
                     label={props.name}
+                    delta={valueText}
                     onChange={onTrackValueChange}
                 />
                 <Button class={buttonUpCls} onclick={onButtonUpClick} >
                     <span class="updown__icon updown__icon-up"></span>
                 </Button>
             </div>
-            <label class="updown__value-text">
-                {valueText}
-            </label>
         </div>
     );
 }

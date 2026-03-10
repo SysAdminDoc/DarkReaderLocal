@@ -3,6 +3,7 @@ import {m} from 'malevic';
 interface TrackProps {
     value: number;
     label: string;
+    delta?: string | null;
     onChange?: (value: number) => void;
 }
 
@@ -69,6 +70,7 @@ export default function Track(props: TrackProps) {
             <label class="track__label">
                 {props.label}
             </label>
+            {props.delta ? <label class="track__delta">{props.delta}</label> : null}
         </span >
     );
 }
