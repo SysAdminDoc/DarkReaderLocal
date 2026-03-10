@@ -60,7 +60,7 @@ export default function Body(props: BodyProps): Malevic.Child {
         <body>
             <aside class="os-sidebar">
                 <div class="os-sidebar__brand">
-                    <span class="os-sidebar__logo" />
+                    <img class="os-sidebar__logo" src="../../icons/dr_128.png" alt="" />
                     <span class="os-sidebar__name">DarkReaderLocal</span>
                 </div>
                 <nav class="os-sidebar__nav">
