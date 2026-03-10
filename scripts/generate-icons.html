@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  body { background: #000; margin: 0; padding: 20px; display: flex; flex-wrap: wrap; gap: 10px; }
+</style>
+</head>
+<body>
+<script>
+const COLORS = {
+  base:    '#1e1e2e',
+  blue:    '#89b4fa',
+  mauve:   '#cba6f7',
+  lavender:'#b4befe',
+};
+
+function drawIcon(ctx, size, active) {
+  const s = size;
+  const cx = s / 2;
+  const cy = s / 2;
+  const r = s * 0.45;
+
+  ctx.clearRect(0, 0, s, s);
+
+  // Background circle
+  const bgGrad = ctx.createRadialGradient(cx, cy * 0.85, s * 0.05, cx, cy, r);
+  if (active) {
+    bgGrad.addColorStop(0, '#2a2a3e');
+    bgGrad.addColorStop(1, '#1e1e2e');
+  } else {
+    bgGrad.addColorStop(0, '#2a2a2a');
+    bgGrad.addColorStop(1, '#1a1a1a');
+  }
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fillStyle = bgGrad;
+  ctx.fill();
+
+  // Border
+  ctx.beginPath();
+  ctx.arc(cx, cy, r - 0.5, 0, Math.PI * 2);
+  ctx.strokeStyle = active ? 'rgba(180,190,254,0.25)' : 'rgba(120,120,120,0.2)';
+  ctx.lineWidth = Math.max(1, s * 0.02);
+  ctx.stroke();
+
+  // Crescent moon
+  const moonR = s * 0.28;
+  const moonCx = cx + s * 0.06;
+  const moonCy = cy - s * 0.03;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(moonCx, moonCy, moonR, 0, Math.PI * 2);
+  ctx.clip();
+  ctx.beginPath();
+  ctx.arc(moonCx, moonCy, moonR, 0, Math.PI * 2);
+  ctx.fillStyle = active ? COLORS.mauve : '#888';
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(moonCx + moonR * 0.45, moonCy - moonR * 0.1, moonR * 0.82, 0, Math.PI * 2);
+  ctx.fillStyle = active ? '#1e1e2e' : '#1a1a1a';
+  ctx.fill();
+  ctx.restore();
+
+  // Stars (active only)
+  if (active) {
+    [[cx - s*0.22, cy - s*0.28, s*0.025],
+     [cx - s*0.34, cy - s*0.12, s*0.018],
+     [cx - s*0.28, cy + s*0.18, s*0.02],
+     [cx + s*0.30, cy + s*0.25, s*0.022]].forEach(([sx, sy, sr]) => {
+      ctx.beginPath();
+      ctx.arc(sx, sy, sr, 0, Math.PI * 2);
+      ctx.fillStyle = COLORS.blue;
+      ctx.globalAlpha = 0.8;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    });
+  }
+
+  // Shield badge (bottom-right)
+  const bx = cx + s * 0.19;
+  const by = cy + s * 0.18;
+  const sw = s * 0.24;
+  const sh = s * 0.28;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(bx, by - sh * 0.5);
+  ctx.bezierCurveTo(bx + sw * 0.5, by - sh * 0.5, bx + sw * 0.5, by + sh * 0.1, bx, by + sh * 0.5);
+  ctx.bezierCurveTo(bx - sw * 0.5, by + sh * 0.1, bx - sw * 0.5, by - sh * 0.5, bx, by - sh * 0.5);
+  ctx.fillStyle = active ? COLORS.blue : '#666';
+  if (active) {
+    ctx.shadowColor = 'rgba(137,180,250,0.5)';
+    ctx.shadowBlur = s * 0.06;
+  }
+  ctx.fill();
+  ctx.restore();
+
+  // Lock inside shield (skip at 16px — too small)
+  if (s >= 19) {
+    const lw = sw * 0.7;
+    const lh = sw * 0.5;
+    const lx = bx - lw / 2;
+    const ly = by - lh * 0.05;
+    const arcR = lw * 0.32;
+
+    ctx.fillStyle = active ? '#1e1e2e' : '#2a2a2a';
+    ctx.beginPath();
+    if (ctx.roundRect) {
+      ctx.roundRect(lx, ly, lw, lh, lw * 0.18);
+    } else {
+      ctx.rect(lx, ly, lw, lh);
+    }
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(bx, ly, arcR, Math.PI, 0);
+    ctx.strokeStyle = active ? '#1e1e2e' : '#2a2a2a';
+    ctx.lineWidth = lw * 0.22;
+    ctx.stroke();
+  }
+}
+
+function generateCanvas(size, active) {
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  canvas.id = `icon-${size}-${active ? 'active' : 'inactive'}`;
+  const ctx = canvas.getContext('2d');
+  drawIcon(ctx, size, active);
+  document.body.appendChild(canvas);
+  return canvas;
+}
+
+const sizes = [128, 48, 38, 19, 16];
+sizes.forEach(s => {
+  generateCanvas(s, true);
+  generateCanvas(s, false);
+});
+
+window.iconData = {};
+document.querySelectorAll('canvas').forEach(c => {
+  window.iconData[c.id] = c.toDataURL('image/png');
+});
+console.log('Icons ready');
+</script>
+</body>
+</html>
