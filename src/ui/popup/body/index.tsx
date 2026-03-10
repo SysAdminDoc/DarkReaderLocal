@@ -2,6 +2,7 @@ import {m} from 'malevic';
 import {getContext} from 'malevic/dom';
 
 import type {ViewProps} from '../../../definitions';
+import {getLocalMessage} from '../../../utils/locales';
 import {isMobile} from '../../../utils/platform';
 import {Overlay} from '../../controls';
 import {openExtensionPage} from '../../utils';
@@ -23,7 +24,7 @@ function Header(props: ViewProps) {
                 class={{'rd-header__power': true, 'rd-header__power--on': props.data.isEnabled}}
                 onclick={() => toggleExtension(props, !props.data.isEnabled)}
             >
-                {props.data.isEnabled ? 'on' : 'off'}
+                {props.data.isEnabled ? getLocalMessage('on') : getLocalMessage('off')}
             </span>
             <span class="rd-header__gear" onclick={() => openExtensionPage('options')} title="Settings" />
         </div>
