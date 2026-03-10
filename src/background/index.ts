@@ -266,3 +266,6 @@ chrome.runtime.onInstalled.addListener((details) => {
     writeInstallationVersion(chrome.storage.local, details);
     writeInstallationVersion(chrome.storage.sync, details);
 });
+
+// Clear any uninstall redirect URL left over from upstream Dark Reader
+chrome.runtime.setUninstallURL('');
