@@ -163,6 +163,19 @@ function Body(props: BodyProps & {fonts: string[]} & {installation: {date: numbe
         <body class={{'ext-disabled': !data.isEnabled}}>
             <Loader complete />
 
+            {/* ── Header ── */}
+            <div class="rd-header">
+                <img class="rd-header__icon" src="../../icons/dr_128.png" alt="" />
+                <span class="rd-header__title">DarkReaderLocal</span>
+                <span
+                    class={{'rd-header__power': true, 'rd-header__power--on': data.isEnabled}}
+                    onclick={() => toggleExtension(props, !data.isEnabled)}
+                >
+                    {data.isEnabled ? getLocalMessage('on') : getLocalMessage('off')}
+                </span>
+                <span class="rd-header__gear" onclick={() => openExtensionPage('options')} title="Settings" />
+            </div>
+
             {/* ── Site status row ── */}
             <div class="rd-site">
                 <span
@@ -174,12 +187,6 @@ function Body(props: BodyProps & {fonts: string[]} & {installation: {date: numbe
                     <span class={{'rd-site__status': true, 'rd-site__status--active': isSiteEnabled}}>
                         {isSiteEnabled ? 'Active' : 'Paused'}
                     </span>
-                </span>
-                <span
-                    class={{'rd-power-btn': true, 'rd-power-btn--on': data.isEnabled}}
-                    onclick={() => toggleExtension(props, !data.isEnabled)}
-                >
-                    {data.isEnabled ? getLocalMessage('on') : getLocalMessage('off')}
                 </span>
             </div>
 
