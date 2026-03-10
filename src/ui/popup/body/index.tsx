@@ -2,10 +2,10 @@ import {m} from 'malevic';
 import {getContext} from 'malevic/dom';
 
 import type {ViewProps} from '../../../definitions';
-import {HOMEPAGE_URL} from '../../../utils/links';
 import {isMobile} from '../../../utils/platform';
 import {Overlay} from '../../controls';
 import {openExtensionPage} from '../../utils';
+import {toggleExtension} from '../components/header';
 import MainPage from '../main-page';
 import {Page, PageViewer} from '../page-viewer';
 import ThemePage from '../theme/page';
@@ -14,16 +14,19 @@ interface IndexStore {
     activePage: PageId;
 }
 
-function Logo() {
+function Header(props: ViewProps) {
     return (
-        <a
-            class="m-logo"
-            href={HOMEPAGE_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-        >
-            DarkReaderLocal
-        </a>
+        <div class="rd-header">
+            <img class="rd-header__icon" src="../../icons/dr_128.png" alt="" />
+            <span class="rd-header__title">DarkReaderLocal</span>
+            <span
+                class={{'rd-header__power': true, 'rd-header__power--on': props.data.isEnabled}}
+                onclick={() => toggleExtension(props, !props.data.isEnabled)}
+            >
+                {props.data.isEnabled ? 'on' : 'off'}
+            </span>
+            <span class="rd-header__gear" onclick={() => openExtensionPage('options')} title="Settings" />
+        </div>
     );
 }
 
@@ -110,9 +113,7 @@ export default function Body(props: ViewProps) {
 
     return (
         <body>
-            <section class="m-section">
-                <Logo />
-            </section>
+            <Header {...props} />
             <section class="m-section pages-section">
                 <Pages {...props} />
             </section>
