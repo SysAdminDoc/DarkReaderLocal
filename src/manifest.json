@@ -46,21 +46,5 @@
     "optional_permissions": [
         "contextMenus"
     ],
-    "commands": {
-        "toggle": {
-            "suggested_key": {
-                "default": "Alt+Shift+D"
-            },
-            "description": "__MSG_toggle_extension__"
-        },
-        "addSite": {
-            "suggested_key": {
-                "default": "Alt+Shift+A"
-            },
-            "description": "__MSG_toggle_current_site__"
-        },
-        "switchEngine": {
-            "description": "__MSG_theme_generation_mode__"
-        }
-    }
+    "commands": {}
 }

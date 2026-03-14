@@ -6,8 +6,6 @@ export enum MessageTypeUItoBG {
     CHANGE_SETTINGS = 'ui-bg-change-settings',
     SET_THEME = 'ui-bg-set-theme',
     TOGGLE_ACTIVE_TAB = 'ui-bg-toggle-active-tab',
-    MARK_NEWS_AS_READ = 'ui-bg-mark-news-as-read',
-    MARK_NEWS_AS_DISPLAYED = 'ui-bg-mark-news-as-displayed',
     LOAD_CONFIG = 'ui-bg-load-config',
     APPLY_DEV_DYNAMIC_THEME_FIXES = 'ui-bg-apply-dev-dynamic-theme-fixes',
     RESET_DEV_DYNAMIC_THEME_FIXES = 'ui-bg-reset-dev-dynamic-theme-fixes',
@@ -15,10 +13,7 @@ export enum MessageTypeUItoBG {
     RESET_DEV_INVERSION_FIXES = 'ui-bg-reset-dev-inversion-fixes',
     APPLY_DEV_STATIC_THEMES = 'ui-bg-apply-dev-static-themes',
     RESET_DEV_STATIC_THEMES = 'ui-bg-reset-dev-static-themes',
-    START_ACTIVATION = 'ui-bg-start-activation',
-    RESET_ACTIVATION = 'ui-bg-reset-activation',
-    COLOR_SCHEME_CHANGE = 'ui-bg-color-scheme-change',
-    HIDE_HIGHLIGHTS = 'ui-bg-hide-highlights'
+    COLOR_SCHEME_CHANGE = 'ui-bg-color-scheme-change'
 }
 
 export enum MessageTypeBGtoUI {

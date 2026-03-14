@@ -9,9 +9,6 @@ import {getFontList, saveFile} from '../utils';
 
 import Body from './components/body';
 import {fixNotClosingPopupOnNavigation} from './utils/issues';
-import {initAltUI, shouldUseAltUI} from '@plus/popup/plus-body';
-
-declare const __PLUS__: boolean;
 
 function renderBody(data: ExtensionData, fonts: string[], installation: {date: number; version: string}, actions: ExtensionActions) {
     if (data.settings.previewNewDesign) {
@@ -20,13 +17,6 @@ function renderBody(data: ExtensionData, fonts: string[], installation: {date: n
         }
     } else if (document.documentElement.classList.contains('preview')) {
         document.documentElement.classList.remove('preview');
-    }
-
-    if (data.news && data.news.length > 0) {
-        const latest = data.news[0];
-        if (latest && !latest.displayed) {
-            actions.markNewsAsDisplayed([latest.id]);
-        }
     }
 
     sync(document.body, (
@@ -47,10 +37,6 @@ async function getInstallationData() {
 }
 
 async function start() {
-    if (__PLUS__ && shouldUseAltUI()) {
-        return await initAltUI();
-    }
-
     const connector = new Connector();
     window.addEventListener('unload', () => connector.disconnect());
 

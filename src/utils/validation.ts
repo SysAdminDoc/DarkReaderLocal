@@ -106,7 +106,6 @@ export function validateSettings(settings: Partial<UserSettings>): SettingValida
     validateProperty(settings, 'schemeVersion', isNumber, DEFAULT_SETTINGS);
 
     validateProperty(settings, 'enabled', isBoolean, DEFAULT_SETTINGS);
-    validateProperty(settings, 'fetchNews', isBoolean, DEFAULT_SETTINGS);
 
     validateProperty(settings, 'theme', isPlainObject, DEFAULT_SETTINGS);
     const {errors: themeErrors} = validateTheme(settings.theme);
@@ -144,7 +143,6 @@ export function validateSettings(settings: Partial<UserSettings>): SettingValida
     validateProperty(settings, 'enabledByDefault', isBoolean, DEFAULT_SETTINGS);
     validateProperty(settings, 'changeBrowserTheme', isBoolean, DEFAULT_SETTINGS);
     validateProperty(settings, 'syncSettings', isBoolean, DEFAULT_SETTINGS);
-    validateProperty(settings, 'syncSitesFixes', isBoolean, DEFAULT_SETTINGS);
     validateProperty(settings, 'automation', (automation: Automation) => {
         if (!isPlainObject(automation)) {
             return false;

@@ -1,7 +1,7 @@
 {
     "browser_specific_settings": {
         "gecko": {
-            "id": "addon@darkreader.org",
+            "id": "DarkReaderLocal@sysadmindoc.dev",
             "strict_min_version": "78.0"
         },
         "gecko_android": {}

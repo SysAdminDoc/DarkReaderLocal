@@ -33,7 +33,7 @@ _______|_______/__/ ____ \\__\\__|___\\__\\__|___\\__\\____
 |  |__/  /|  ____/  /__\\  \\ |  |   )  |  ____|  |__/  /
 |  ____  \\|  |__/  ______  \\|  |__/  /|  |___|  ____  \\
 |__|   \\__\\____/__/      \\__\\_______/ |______|__|   \\__\\
-                https://darkreader.org
+                DarkReaderLocal
 */
 
 /*! Dark reader generated CSS | Licensed under MIT https://github.com/darkreader/darkreader/blob/main/LICENSE */

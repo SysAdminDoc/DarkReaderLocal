@@ -1,20 +1,16 @@
 import type {ExtensionData, Theme, TabInfo, MessageUItoBG, UserSettings, DevToolsData, MessageCStoBG, MessageBGtoUI} from '../definitions';
 import {MessageTypeBGtoUI, MessageTypeUItoBG} from '../utils/message';
-import {HOMEPAGE_URL} from '../utils/links';
+
 import {isFirefox} from '../utils/platform';
 
 import {makeFirefoxHappy} from './make-firefox-happy';
 import {ASSERT} from './utils/log';
-
-declare const __PLUS__: boolean;
 
 export interface ExtensionAdapter {
     collect: () => Promise<ExtensionData>;
     collectDevToolsData: () => Promise<DevToolsData>;
     changeSettings: (settings: Partial<UserSettings>) => void;
     setTheme: (theme: Partial<Theme>) => void;
-    markNewsAsRead: (ids: string[]) => Promise<void>;
-    markNewsAsDisplayed: (ids: string[]) => Promise<void>;
     toggleActiveTab: () => void;
     loadConfig: (options: {local: boolean}) => Promise<void>;
     applyDevDynamicThemeFixes: (json: string) => Error;
@@ -23,9 +19,6 @@ export interface ExtensionAdapter {
     resetDevInversionFixes: () => void;
     applyDevStaticThemes: (text: string) => Error;
     resetDevStaticThemes: () => void;
-    startActivation: (email: string, key: string) => Promise<void>;
-    resetActivation: () => Promise<void>;
-    hideHighlights: (ids: string[]) => Promise<void>;
 }
 
 export default class Messenger {
@@ -54,13 +47,7 @@ export default class Messenger {
             chrome.runtime.getURL('/ui/options/index.html'),
             chrome.runtime.getURL('/ui/stylesheet-editor/index.html'),
         ];
-        if (
-            allowedSenderURL.includes(sender.url!) || (
-                __PLUS__ &&
-                message.type === MessageTypeUItoBG.CHANGE_SETTINGS &&
-                sender.url?.startsWith(`${HOMEPAGE_URL}/plus/activate/`)
-            )
-        ) {
+        if (allowedSenderURL.includes(sender.url!)) {
             Messenger.onUIMessage(message as MessageUItoBG, sendResponse);
             return ([
                 MessageTypeUItoBG.GET_DATA,
@@ -143,12 +130,6 @@ export default class Messenger {
             case MessageTypeUItoBG.TOGGLE_ACTIVE_TAB:
                 Messenger.adapter.toggleActiveTab();
                 break;
-            case MessageTypeUItoBG.MARK_NEWS_AS_READ:
-                Messenger.adapter.markNewsAsRead(data);
-                break;
-            case MessageTypeUItoBG.MARK_NEWS_AS_DISPLAYED:
-                Messenger.adapter.markNewsAsDisplayed(data);
-                break;
             case MessageTypeUItoBG.LOAD_CONFIG:
                 Messenger.adapter.loadConfig(data);
                 break;
@@ -175,15 +156,6 @@ export default class Messenger {
             }
             case MessageTypeUItoBG.RESET_DEV_STATIC_THEMES:
                 Messenger.adapter.resetDevStaticThemes();
-                break;
-            case MessageTypeUItoBG.START_ACTIVATION:
-                Messenger.adapter.startActivation(data.email, data.key);
-                break;
-            case MessageTypeUItoBG.RESET_ACTIVATION:
-                Messenger.adapter.resetActivation();
-                break;
-            case MessageTypeUItoBG.HIDE_HIGHLIGHTS:
-                Messenger.adapter.hideHighlights(data);
                 break;
             default:
                 break;

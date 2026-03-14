@@ -11,12 +11,10 @@ export interface ExtensionData {
     isReady: boolean;
     isAllowedFileSchemeAccess: boolean;
     settings: UserSettings;
-    news: News[];
     shortcuts: Shortcuts;
     colorScheme: ParsedColorSchemeConfig;
     forcedScheme: 'dark' | 'light' | null;
     activeTab: TabInfo;
-    uiHighlights: string[];
 }
 
 export interface DevToolsData {
@@ -35,8 +33,6 @@ export interface ExtensionActions {
     setTheme(theme: Partial<Theme>): void;
     setShortcut(command: string, shortcut: string): Promise<string | null>;
     toggleActiveTab(): void;
-    markNewsAsRead(ids: string[]): void;
-    markNewsAsDisplayed(ids: string[]): void;
     loadConfig(options: {local: boolean}): void;
     applyDevDynamicThemeFixes(text: string): Promise<void>;
     resetDevDynamicThemeFixes(): void;
@@ -44,9 +40,6 @@ export interface ExtensionActions {
     resetDevInversionFixes(): void;
     applyDevStaticThemes(text: string): Promise<void>;
     resetDevStaticThemes(): void;
-    startActivation(email: string, key: string): void;
-    resetActivation(): void;
-    hideHighlights(ids: string[]): void;
 }
 
 export interface ExtWrapper {
@@ -103,7 +96,6 @@ export interface Automation {
 export interface UserSettings {
     schemeVersion: number;
     enabled: boolean;
-    fetchNews: boolean;
     theme: Theme;
     presets: ThemePreset[];
     customThemes: CustomSiteConfig[];
@@ -112,7 +104,6 @@ export interface UserSettings {
     disabledFor: string[];
     changeBrowserTheme: boolean;
     syncSettings: boolean;
-    syncSitesFixes: boolean;
     automation: Automation;
     time: TimeSettings;
     location: LocationSettings;
@@ -252,17 +243,6 @@ export interface StaticTheme {
     noImage?: string[];
     invert?: string[];
     noCommon?: boolean;
-}
-
-export interface News {
-    id: string;
-    date: string;
-    url: string;
-    headline: string;
-    read?: boolean;
-    displayed?: boolean;
-    badge?: string;
-    icon?: string;
 }
 
 // These values need to match those in Manifest

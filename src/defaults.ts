@@ -1,4 +1,3 @@
-import {extendThemeDefaults} from '@plus/defaults';
 import type {Theme, UserSettings} from './definitions';
 import {ThemeEngine} from './generators/theme-engines';
 import {AutomationMode} from './utils/automation';
@@ -6,7 +5,6 @@ import type {ParsedColorSchemeConfig} from './utils/colorscheme-parser';
 import {isMacOS, isWindows, isCSSColorSchemePropSupported, isEdge, isMobile} from './utils/platform';
 
 declare const __CHROMIUM_MV3__: boolean;
-declare const __PLUS__: boolean;
 
 export const DEFAULT_COLORS = {
     darkScheme: {
@@ -42,10 +40,6 @@ export const DEFAULT_THEME: Theme = {
     immediateModify: false,
 };
 
-if (__PLUS__) {
-    extendThemeDefaults(DEFAULT_THEME);
-}
-
 export const DEFAULT_COLORSCHEME: ParsedColorSchemeConfig = {
     light: {
         Default: {
@@ -71,7 +65,6 @@ const filterModeSites = [
 export const DEFAULT_SETTINGS: UserSettings = {
     schemeVersion: 0,
     enabled: true,
-    fetchNews: false,
     theme: DEFAULT_THEME,
     presets: [],
     customThemes: filterModeSites.map((url) => {
@@ -87,7 +80,6 @@ export const DEFAULT_SETTINGS: UserSettings = {
     disabledFor: [],
     changeBrowserTheme: false,
     syncSettings: true,
-    syncSitesFixes: false,
     automation: {
         enabled: isEdge && isMobile ? true : false,
         mode: isEdge && isMobile ? AutomationMode.SYSTEM : AutomationMode.NONE,
@@ -106,5 +98,5 @@ export const DEFAULT_SETTINGS: UserSettings = {
     enableForPDF: true,
     enableForProtectedPages: false,
     enableContextMenus: true,
-    detectDarkTheme: false,
+    detectDarkTheme: true,
 };

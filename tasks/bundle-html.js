@@ -20,7 +20,7 @@ function html(platform, title, hasLoader, hasStyleSheet, compatibility) {
             '        <link rel="stylesheet" type="text/css" href="style.css" />',
             '        <link',
             '            rel="shortcut icon"',
-            '            href="../assets/images/darkreader-icon-256x256.png"',
+            '            href="../../icons/dr_128.png"',
             '        />',
         ] : null,
         '        <script src="index.js" defer></script>',
@@ -44,7 +44,7 @@ function html(platform, title, hasLoader, hasStyleSheet, compatibility) {
 /** @type {HTMLEntry[]} */
 const htmlEntries = [
     {
-        title: 'Dark Reader background',
+        title: 'DarkReaderLocal background',
         path: 'background/index.html',
         hasLoader: false,
         hasStyleSheet: false,
@@ -53,7 +53,7 @@ const htmlEntries = [
         platforms: [PLATFORM.CHROMIUM_MV2, PLATFORM.CHROMIUM_MV2_PLUS, PLATFORM.FIREFOX_MV2, PLATFORM.THUNDERBIRD],
     },
     {
-        title: 'Dark Reader settings',
+        title: 'DarkReaderLocal settings',
         path: 'ui/popup/index.html',
         hasLoader: true,
         hasStyleSheet: true,
@@ -61,7 +61,7 @@ const htmlEntries = [
         reloadType: reload.UI,
     },
     {
-        title: 'Dark Reader settings',
+        title: 'DarkReaderLocal settings',
         path: 'ui/options/index.html',
         hasLoader: false,
         hasStyleSheet: true,
@@ -69,7 +69,7 @@ const htmlEntries = [
         reloadType: reload.UI,
     },
     {
-        title: 'Dark Reader developer tools',
+        title: 'DarkReaderLocal developer tools',
         path: 'ui/devtools/index.html',
         hasLoader: false,
         hasStyleSheet: true,
@@ -77,7 +77,7 @@ const htmlEntries = [
         reloadType: reload.UI,
     },
     {
-        title: 'Dark Reader CSS editor',
+        title: 'DarkReaderLocal CSS editor',
         path: 'ui/stylesheet-editor/index.html',
         hasLoader: false,
         hasStyleSheet: true,

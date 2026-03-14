@@ -9,7 +9,6 @@ export function getMockData(override = {} as Partial<ExtensionData>): ExtensionD
         settings: {
             schemeVersion: 2,
             enabled: true,
-            fetchNews: true,
             presets: [],
             theme: {
                 mode: 1,
@@ -28,7 +27,6 @@ export function getMockData(override = {} as Partial<ExtensionData>): ExtensionD
             customThemes: [],
             enabledFor: [],
             disabledFor: [],
-            syncSitesFixes: false,
             enableContextMenus: false,
             enabledByDefault: true,
             changeBrowserTheme: false,
@@ -60,7 +58,6 @@ export function getMockData(override = {} as Partial<ExtensionData>): ExtensionD
             'fantasy',
             'system-ui',
         ],
-        news: [],
         shortcuts: {
             'addSite': 'Alt+Shift+A',
             'toggle': 'Alt+Shift+D',
@@ -88,12 +85,11 @@ export function getMockData(override = {} as Partial<ExtensionData>): ExtensionD
         activeTab: {
             id: 1,
             documentId: 'id',
-            url: 'https://darkreader.org/',
+            url: 'https://example.com/',
             isProtected: false,
             isInDarkList: false,
             isInjected: true,
             isDarkThemeDetected: false,
         },
-        uiHighlights: [],
     } as ExtensionData, override);
 }

@@ -17,7 +17,10 @@ function hasBuiltInDarkTheme() {
     const stepX = Math.floor(winWidth / Math.min(MAX_ROW_COUNT, Math.ceil(winWidth / CELL_SIZE)));
     const stepY = Math.floor(winHeight / Math.min(MAX_ROW_COUNT, Math.ceil(winHeight / CELL_SIZE)));
 
+    const DARK_THRESHOLD = 0.75;
     const processedElements = new Set<Element>();
+    let darkCount = 0;
+    let totalCount = 0;
 
     for (let y = Math.floor(stepY / 2); y < winHeight; y += stepY) {
         for (let x = Math.floor(stepX / 2); x < winWidth; x += stepX) {
@@ -29,7 +32,8 @@ function hasBuiltInDarkTheme() {
             const style = element === document.documentElement ? rootStyle : getComputedStyle(element);
             const bgColor = parseColorWithCache(style.backgroundColor);
             if (!bgColor) {
-                return false;
+                totalCount++;
+                continue;
             }
             if (bgColor.r === 24 && bgColor.g === 26 && bgColor.b === 27) {
                 // For some websites changes to CSSStyleSheet.disabled and HTMLStyleElement.textContent
@@ -37,22 +41,26 @@ function hasBuiltInDarkTheme() {
                 // Probably a browser bug. Treat as not having a dark theme.
                 return false;
             }
+            totalCount++;
             if (bgColor.a === 1) {
                 const bgLightness = getSRGBLightness(bgColor.r, bgColor.g, bgColor.b);
-                if (bgLightness > 0.5) {
-                    return false;
+                if (bgLightness <= 0.5) {
+                    darkCount++;
                 }
             } else {
                 const textColor = parseColorWithCache(style.color);
-                if (!textColor) {
-                    return false;
-                }
-                const textLightness = getSRGBLightness(textColor.r, textColor.g, textColor.b);
-                if (textLightness < 0.5) {
-                    return false;
+                if (textColor) {
+                    const textLightness = getSRGBLightness(textColor.r, textColor.g, textColor.b);
+                    if (textLightness >= 0.5) {
+                        darkCount++;
+                    }
                 }
             }
         }
+    }
+
+    if (totalCount > 0 && darkCount / totalCount < DARK_THRESHOLD) {
+        return false;
     }
 
     const rootColor = parseColorWithCache(rootStyle.backgroundColor);

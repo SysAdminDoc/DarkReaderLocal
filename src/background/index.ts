@@ -1,5 +1,5 @@
 import {canInjectScript, keepListeningToEvents} from '../background/utils/extension-api';
-import type {ColorScheme, DebugMessageBGtoCS, DebugMessageBGtoUI, DebugMessageCStoBG, ExtensionData, News, UserSettings} from '../definitions';
+import type {ColorScheme, DebugMessageBGtoCS, DebugMessageBGtoUI, DebugMessageCStoBG, ExtensionData, UserSettings} from '../definitions';
 
 import {emulateColorScheme, isSystemDarkModeEnabled} from '../utils/media-query';
 import {DebugMessageTypeBGtoCS, DebugMessageTypeBGtoUI, DebugMessageTypeCStoBG} from '../utils/message';
@@ -7,7 +7,6 @@ import {isFirefox} from '../utils/platform';
 
 import {Extension} from './extension';
 import {makeChromiumHappy} from './make-chromium-happy';
-import {setNewsForTesting} from './newsmaker';
 import {ASSERT} from './utils/log';
 import {sendLog} from './utils/sendLog';
 
@@ -46,10 +45,6 @@ type TestMessage = {
 } | {
     type: 'firefox-emulateColorScheme';
     data: ColorScheme;
-    id: number;
-} | {
-    type: 'setNews';
-    data: News[];
     id: number;
 };
 
@@ -188,10 +183,6 @@ if (__TEST__) {
                     chrome.storage[region].get(keys as any, respond);
                     break;
                 }
-                case 'setNews':
-                    setNewsForTesting(message.data);
-                    respond();
-                    break;
                 // TODO(anton): remove this once Firefox supports tab.eval() via WebDriver BiDi
                 case 'firefox-createTab':
                     ASSERT('Firefox-specific function', isFirefox);
