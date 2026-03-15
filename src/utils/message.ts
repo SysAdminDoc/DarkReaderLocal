@@ -13,7 +13,10 @@ export enum MessageTypeUItoBG {
     RESET_DEV_INVERSION_FIXES = 'ui-bg-reset-dev-inversion-fixes',
     APPLY_DEV_STATIC_THEMES = 'ui-bg-apply-dev-static-themes',
     RESET_DEV_STATIC_THEMES = 'ui-bg-reset-dev-static-themes',
-    COLOR_SCHEME_CHANGE = 'ui-bg-color-scheme-change'
+    COLOR_SCHEME_CHANGE = 'ui-bg-color-scheme-change',
+    FETCH_REMOTE_CONFIG = 'ui-bg-fetch-remote-config',
+    GET_CONFIG_STATUS = 'ui-bg-get-config-status',
+    SET_ENABLED_CONFIGS = 'ui-bg-set-enabled-configs'
 }
 
 export enum MessageTypeBGtoUI {

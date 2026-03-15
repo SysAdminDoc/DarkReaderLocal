@@ -1,4 +1,4 @@
-import type {ExtensionData, ExtensionActions, Theme, UserSettings, DevToolsData, MessageUItoBG, MessageBGtoUI} from '../../definitions';
+import type {ExtensionData, ExtensionActions, Theme, UserSettings, DevToolsData, MessageUItoBG, MessageBGtoUI, ConfigDiffResult, ConfigStatusData} from '../../definitions';
 import {MessageTypeBGtoUI, MessageTypeUItoBG} from '../../utils/message';
 import {isFirefox} from '../../utils/platform';
 
@@ -140,6 +140,26 @@ export default class Connector implements ExtensionActions {
 
     resetDevStaticThemes(): void {
         chrome.runtime.sendMessage<MessageUItoBG>({type: MessageTypeUItoBG.RESET_DEV_STATIC_THEMES});
+    }
+
+    async fetchRemoteConfig(): Promise<ConfigDiffResult[]> {
+        return await this.sendRequest<ConfigDiffResult[]>(MessageTypeUItoBG.FETCH_REMOTE_CONFIG);
+    }
+
+    async getConfigStatus(): Promise<ConfigStatusData> {
+        return await this.sendRequest<ConfigStatusData>(MessageTypeUItoBG.GET_CONFIG_STATUS);
+    }
+
+    async setEnabledConfigs(configs: Record<string, boolean>): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            chrome.runtime.sendMessage<MessageUItoBG>({type: MessageTypeUItoBG.SET_ENABLED_CONFIGS, data: configs}, ({data, error}: any) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve(data);
+                }
+            });
+        });
     }
 
     disconnect(): void {

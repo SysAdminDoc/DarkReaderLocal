@@ -171,8 +171,17 @@ function Body(props: BodyProps & {fonts: string[]} & {installation: {date: numbe
                     <span class={{'rd-site__dot': true, 'rd-site__dot--on': isSiteEnabled}} />
                     <span class="rd-site__url">{urlText}</span>
                     <span class={{'rd-site__status': true, 'rd-site__status--active': isSiteEnabled}}>
-                        {isSiteEnabled ? 'Active' : 'Paused'}
+                        {tab.isInDarkList ? 'Dark List'
+                            : tab.isDarkThemeDetected ? 'Native Dark'
+                                : isSiteEnabled ? 'Active' : 'Paused'}
                     </span>
+                </span>
+                <span
+                    class="rd-site__fix-btn"
+                    onclick={() => openExtensionPage('devtools')}
+                    title="Edit CSS fixes for this site"
+                >
+                    Fix
                 </span>
             </div>
 
@@ -450,6 +459,7 @@ function Body(props: BodyProps & {fonts: string[]} & {installation: {date: numbe
                     <span class="rd-settings-btn" onclick={() => openExtensionPage('options')}>
                         All Settings
                     </span>
+                    <span class="rd-config-source">Rules: Bundled + Remote Cache</span>
                 </div>
 
             </div>

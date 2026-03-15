@@ -230,7 +230,7 @@ export class Extension {
         Extension.init();
         await TabManager.cleanState();
         await Promise.all([
-            ConfigManager.load({local: true}),
+            ConfigManager.load(),
             Extension.MV3syncSystemColorStateManager(null),
             UserStorage.loadSettings(),
         ]);
@@ -276,6 +276,13 @@ export class Extension {
             resetDevInversionFixes: DevTools.resetInversionFixes,
             applyDevStaticThemes: DevTools.applyStaticThemes,
             resetDevStaticThemes: DevTools.resetStaticThemes,
+            fetchRemoteConfig: async () => {
+                const diffs = await ConfigManager.fetchRemoteConfigs();
+                Extension.onAppToggle();
+                return diffs;
+            },
+            getConfigStatus: () => ConfigManager.getConfigStatus(),
+            setEnabledConfigs: (configs: Record<string, boolean>) => ConfigManager.setEnabledConfigs(configs as any),
         };
     }
 

@@ -1,4 +1,4 @@
-import type {ExtensionData, Theme, TabInfo, MessageUItoBG, UserSettings, DevToolsData, MessageCStoBG, MessageBGtoUI} from '../definitions';
+import type {ExtensionData, Theme, TabInfo, MessageUItoBG, UserSettings, DevToolsData, MessageCStoBG, MessageBGtoUI, ConfigDiffResult, ConfigStatusData} from '../definitions';
 import {MessageTypeBGtoUI, MessageTypeUItoBG} from '../utils/message';
 
 import {isFirefox} from '../utils/platform';
@@ -19,6 +19,9 @@ export interface ExtensionAdapter {
     resetDevInversionFixes: () => void;
     applyDevStaticThemes: (text: string) => Error;
     resetDevStaticThemes: () => void;
+    fetchRemoteConfig: () => Promise<ConfigDiffResult[]>;
+    getConfigStatus: () => Promise<ConfigStatusData>;
+    setEnabledConfigs: (configs: Record<string, boolean>) => Promise<void>;
 }
 
 export default class Messenger {
@@ -52,6 +55,9 @@ export default class Messenger {
             return ([
                 MessageTypeUItoBG.GET_DATA,
                 MessageTypeUItoBG.GET_DEVTOOLS_DATA,
+                MessageTypeUItoBG.FETCH_REMOTE_CONFIG,
+                MessageTypeUItoBG.GET_CONFIG_STATUS,
+                MessageTypeUItoBG.SET_ENABLED_CONFIGS,
             ].includes(message.type as MessageTypeUItoBG));
         }
     }
@@ -107,7 +113,7 @@ export default class Messenger {
             .catch((error) => port.postMessage({error}));
     }
 
-    private static onUIMessage({type, data}: MessageUItoBG, sendResponse: (response: {data?: ExtensionData | DevToolsData | TabInfo; error?: string}) => void) {
+    private static onUIMessage({type, data}: MessageUItoBG, sendResponse: (response: {data?: any; error?: string}) => void) {
         switch (type) {
             case MessageTypeUItoBG.GET_DATA:
                 Messenger.adapter.collect().then((data) => sendResponse({data}));
@@ -156,6 +162,19 @@ export default class Messenger {
             }
             case MessageTypeUItoBG.RESET_DEV_STATIC_THEMES:
                 Messenger.adapter.resetDevStaticThemes();
+                break;
+            case MessageTypeUItoBG.FETCH_REMOTE_CONFIG:
+                Messenger.adapter.fetchRemoteConfig()
+                    .then((diffs) => sendResponse({data: diffs}))
+                    .catch((err: Error) => sendResponse({error: err.message}));
+                break;
+            case MessageTypeUItoBG.GET_CONFIG_STATUS:
+                Messenger.adapter.getConfigStatus()
+                    .then((status) => sendResponse({data: status}));
+                break;
+            case MessageTypeUItoBG.SET_ENABLED_CONFIGS:
+                Messenger.adapter.setEnabledConfigs(data)
+                    .then(() => sendResponse({data: 'ok'}));
                 break;
             default:
                 break;

@@ -4,6 +4,8 @@ const STORAGE_KEY_WAS_ENABLED_FOR_HOST = '__darkreader__wasEnabledForHost';
 const STORAGE_KEY_IMAGE_DETAILS_LIST = '__darkreader__imageDetails_v2_list';
 const STORAGE_KEY_IMAGE_DETAILS_PREFIX = '__darkreader__imageDetails_v2_';
 const STORAGE_KEY_CSS_FETCH_PREFIX = '__darkreader__cssFetch_';
+const STORAGE_KEY_CSS_FETCH_TS_PREFIX = '__darkreader__cssFetchTs_';
+const CSS_CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
 export function wasEnabledForHost(): boolean | null {
     try {
@@ -74,15 +76,27 @@ export function readImageDetailsCache(targetMap: Map<string, ImageDetails>): voi
 
 export function writeCSSFetchCache(url: string, cssText: string): void {
     const key = `${STORAGE_KEY_CSS_FETCH_PREFIX}${url}`;
+    const tsKey = `${STORAGE_KEY_CSS_FETCH_TS_PREFIX}${url}`;
     try {
         sessionStorage.setItem(key, cssText);
+        sessionStorage.setItem(tsKey, String(Date.now()));
     } catch (err) {
     }
 }
 
 export function readCSSFetchCache(url: string): string | null {
     const key = `${STORAGE_KEY_CSS_FETCH_PREFIX}${url}`;
+    const tsKey = `${STORAGE_KEY_CSS_FETCH_TS_PREFIX}${url}`;
     try {
+        const tsStr = sessionStorage.getItem(tsKey);
+        if (tsStr) {
+            const ts = Number(tsStr);
+            if (Date.now() - ts > CSS_CACHE_TTL_MS) {
+                sessionStorage.removeItem(key);
+                sessionStorage.removeItem(tsKey);
+                return null;
+            }
+        }
         return sessionStorage.getItem(key) ?? null;
     } catch (err) {
     }

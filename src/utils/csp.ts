@@ -14,7 +14,7 @@ export function prepareCSPMV3(): chrome.runtime.ManifestV3['content_security_pol
                 '*',
                 'data:',
             ],
-            'connect-src': [CSP.NONE],
+            'connect-src': ['https://raw.githubusercontent.com'],
             'navigate-to': [
                 CSP.SELF,
             ],

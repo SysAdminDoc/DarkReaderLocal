@@ -40,6 +40,9 @@ export interface ExtensionActions {
     resetDevInversionFixes(): void;
     applyDevStaticThemes(text: string): Promise<void>;
     resetDevStaticThemes(): void;
+    fetchRemoteConfig(): Promise<ConfigDiffResult[]>;
+    getConfigStatus(): Promise<ConfigStatusData>;
+    setEnabledConfigs(configs: Record<string, boolean>): Promise<void>;
 }
 
 export interface ExtWrapper {
@@ -243,6 +246,21 @@ export interface StaticTheme {
     noImage?: string[];
     invert?: string[];
     noCommon?: boolean;
+}
+
+export interface ConfigDiffResult {
+    key: string;
+    localLines: number;
+    remoteLines: number;
+    addedLines: number;
+    removedLines: number;
+}
+
+export interface ConfigStatusData {
+    lastFetchedAt: number | null;
+    fetchedTag: string | null;
+    configSource: Record<string, 'local' | 'remote'>;
+    enabledConfigs: Record<string, boolean>;
 }
 
 // These values need to match those in Manifest

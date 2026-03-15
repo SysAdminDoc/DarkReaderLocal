@@ -193,6 +193,26 @@ html:not(.mobile):not(.preview) body.ext-tall {
             color: @color-ok-fore;
         }
     }
+
+    &__fix-btn {
+        background: rgba(124, 109, 181, 0.15);
+        border: 1px solid rgba(124, 109, 181, 0.3);
+        border-radius: 0.25rem;
+        color: #7c6db5;
+        cursor: pointer;
+        flex: none;
+        font-size: 0.65rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        padding: 0.15rem 0.5rem;
+        text-transform: uppercase;
+        transition: all @time-fast;
+
+        &:hover {
+            background: rgba(124, 109, 181, 0.25);
+            color: #a094d0;
+        }
+    }
 }
 
 
@@ -445,8 +465,17 @@ html:not(.mobile):not(.preview) body.ext-tall {
 .rd-footer {
     align-items: center;
     display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
     justify-content: center;
     padding-bottom: 0.125rem;
+}
+
+.rd-config-source {
+    color: #666;
+    font-size: 0.65rem;
+    letter-spacing: 0.3px;
+    text-align: center;
 }
 
 .rd-settings-btn {
